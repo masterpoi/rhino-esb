@@ -266,11 +266,13 @@ namespace Rhino.ServiceBus.Msmq
             return true;
         }
 
+
+
         protected Message GenerateMsmqMessageFromMessageBatch(params object[] msgs)
         {
             var message = new Message();
 
-        	try
+            try
         	{
         		messageSerializer.Serialize(msgs, message.BodyStream);
         	}
@@ -283,6 +285,8 @@ namespace Rhino.ServiceBus.Msmq
             message.ResponseQueue = InitalizeQueue(Endpoint).ToResponseQueue();
 
             message.Extension = Guid.NewGuid().ToByteArray();
+
+            message.Priority = msgs[0].GetPriorityForMessage();
 
             message.AppSpecific = GetAppSpecificMarker(msgs);
 
