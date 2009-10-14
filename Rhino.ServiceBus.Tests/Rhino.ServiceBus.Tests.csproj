@@ -137,6 +137,7 @@
     <Compile Include="RhinoQueues\UsingRhinoQueuesTransport.cs" />
     <Compile Include="RhinoQueues\WithDebugging.cs" />
     <Compile Include="SagaTests.cs" />
+    <Compile Include="SendAndReceivePrioritizedMessages.cs" />
     <Compile Include="TestExtensions.cs" />
     <Compile Include="Warnings\Warnings_would_be_generated.cs" />
     <Compile Include="When_custom_element_serialization_is_used.cs" />

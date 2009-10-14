@@ -304,5 +304,24 @@ namespace Rhino.ServiceBus.Tests
                 Assert.Equal(2, count);
             }
         }
+
+        [Fact]
+        public void Queue_uses_priorities_correctly()
+        {           
+
+            var messageA = new Message("a") { Priority = MessagePriority.Low };
+            var messageB = new Message("b") { Priority = MessagePriority.Normal };
+            queue.Purge();
+            queue.Send(messageA);
+            queue.Send(messageB);
+
+            var  msg = queue.Receive(TimeSpan.FromSeconds(30), MessageQueueTransactionType.Single);
+            msg.Formatter = new XmlMessageFormatter(new Type[] { typeof(string) });
+            Assert.Equal("b", msg.Body);
+            msg = queue.Receive(TimeSpan.FromSeconds(30), MessageQueueTransactionType.Single);
+            msg.Formatter = new XmlMessageFormatter(new Type[] { typeof(string) });
+            Assert.Equal("a", msg.Body);
+                
+        }
     }
 }

@@ -193,6 +193,7 @@
     <Compile Include="Internal\ICustomElementSerializer.cs" />
     <Compile Include="Internal\IElementSerializationBehavior.cs" />
     <Compile Include="Internal\IEncryptionService.cs" />
+    <Compile Include="IPrioritySpecifyingMessage.cs" />
     <Compile Include="ISagaFinder.cs" />
     <Compile Include="LoadBalancer\LoadBalancerFacility.cs" />
     <Compile Include="LoadBalancer\MsmqSecondaryLoadBalancer.cs" />

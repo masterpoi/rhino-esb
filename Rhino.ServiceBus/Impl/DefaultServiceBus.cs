@@ -76,6 +76,9 @@ namespace Rhino.ServiceBus.Impl
             if (messages.Length == 0)
                 throw new MessagePublicationException("Cannot reply with an empty message batch");
 
+            if (!messages.AreSpecifyingSamePriority())
+                throw new MessagePublicationException("All messages in a message batch should specify the same priority");
+
             transport.Reply(messages);
         }
 
@@ -86,6 +89,9 @@ namespace Rhino.ServiceBus.Impl
 
             if (messages.Length == 0)
                 throw new MessagePublicationException("Cannot send empty message batch");
+
+            if (!messages.AreSpecifyingSamePriority())
+                throw new MessagePublicationException("All messages in a message batch should specify the same priority");
 
             transport.Send(endpoint, messages);
         }
@@ -354,6 +360,10 @@ namespace Rhino.ServiceBus.Impl
             bool sentMsg = false;
             if (messages.Length == 0)
                 throw new MessagePublicationException("Cannot publish an empty message batch");
+
+            if (!messages.AreSpecifyingSamePriority())
+                throw new MessagePublicationException("All messages in a message batch should specify the same priority");
+
             object msg = messages[0];
             IEnumerable<Uri> subscriptions = subscriptionStorage.GetSubscriptionsFor(msg.GetType());
             foreach (Uri subscription in subscriptions)
