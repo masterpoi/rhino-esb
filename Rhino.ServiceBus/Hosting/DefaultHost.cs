@@ -5,10 +5,9 @@ using System.Reflection;
 using Castle.Core.Configuration;
 using Castle.Windsor;
 using Castle.Windsor.Configuration.Interpreters;
-using log4net;
-using log4net.Config;
 using Rhino.ServiceBus.Actions;
 using Rhino.ServiceBus.Impl;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.Hosting
 {
@@ -46,15 +45,9 @@ namespace Rhino.ServiceBus.Hosting
 
         private void InitailizeBus(string asmName)
         {
-            string logfile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log4net.config");
-
-            XmlConfigurator.ConfigureAndWatch(new FileInfo(logfile));
-
             assemblyName = asmName;
 
             CreateBootStrapper();
-
-            log4net.GlobalContext.Properties["BusName"] = bootStrapper.GetType().Namespace;
 
             CreateContainer();
 

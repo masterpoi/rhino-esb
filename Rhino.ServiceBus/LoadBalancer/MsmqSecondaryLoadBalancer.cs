@@ -1,11 +1,11 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using log4net;
 using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.Messages;
 using Rhino.ServiceBus.Msmq;
 using Timeout = Rhino.ServiceBus.DataStructures.Timeout;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.LoadBalancer
 {

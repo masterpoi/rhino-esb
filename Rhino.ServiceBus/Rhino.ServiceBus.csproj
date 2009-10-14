@@ -45,10 +45,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SharedLibs\Castle.Windsor.dll</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\SharedLibs\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="Rhino.PersistentHashTable, Version=1.7.0.0, Culture=neutral, PublicKeyToken=0b3305902db7183f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SharedLibs\Rhino.PersistentHashTable.dll</HintPath>
@@ -197,6 +193,8 @@
     <Compile Include="ISagaFinder.cs" />
     <Compile Include="LoadBalancer\LoadBalancerFacility.cs" />
     <Compile Include="LoadBalancer\MsmqSecondaryLoadBalancer.cs" />
+    <Compile Include="Logging\ILog.cs" />
+    <Compile Include="Logging\LogManager.cs" />
     <Compile Include="Messages\Heartbeat.cs" />
     <Compile Include="Messages\IWireEncryptedMessage.cs" />
     <Compile Include="Messages\NewEndpointPersisted.cs" />

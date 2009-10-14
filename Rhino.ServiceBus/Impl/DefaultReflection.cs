@@ -6,8 +6,8 @@ using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 using Castle.MicroKernel.Proxy;
-using log4net;
 using Rhino.ServiceBus.Internal;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.Impl
 {

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Messaging;
 using System.Runtime.Serialization;
 using System.Transactions;
-using log4net;
 using Rhino.ServiceBus.Exceptions;
 using Rhino.ServiceBus.Impl;
 using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.Msmq.TransportActions;
 using Rhino.ServiceBus.Transport;
 using MessageType=Rhino.ServiceBus.Transport.MessageType;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.Msmq
 {

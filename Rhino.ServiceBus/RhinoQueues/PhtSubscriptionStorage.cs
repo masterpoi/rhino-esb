@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using log4net;
 using Rhino.PersistentHashTable;
 using Rhino.ServiceBus.DataStructures;
 using Rhino.ServiceBus.Exceptions;
@@ -11,6 +10,7 @@ using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.MessageModules;
 using Rhino.ServiceBus.Messages;
 using Rhino.ServiceBus.Transport;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.RhinoQueues
 {

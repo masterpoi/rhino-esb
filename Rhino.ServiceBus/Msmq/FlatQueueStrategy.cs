@@ -1,12 +1,12 @@
 using System;
 using System.Messaging;
-using log4net;
 using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.Transport;
 
 namespace Rhino.ServiceBus.Msmq
 {
     using System.Collections.Generic;
+    using Rhino.ServiceBus.Logging;
 
     /// <summary>
     /// Handles message moving to sibling queues.

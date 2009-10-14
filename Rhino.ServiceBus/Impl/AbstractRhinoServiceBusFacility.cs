@@ -14,6 +14,8 @@ using Rhino.ServiceBus.MessageModules;
 using Rhino.ServiceBus.Sagas;
 using Rhino.ServiceBus.Serializers;
 using System.Transactions;
+using Rhino.ServiceBus.Logging;
+using Castle.Core.Logging;
 
 namespace Rhino.ServiceBus.Impl
 {
@@ -60,6 +62,9 @@ namespace Rhino.ServiceBus.Impl
 
         protected override void Init()
         {
+            if (Kernel.HasComponent(typeof(ILogger)))
+                LogManager.Init(Kernel.Resolve<ILogger>());
+
             if(FacilityConfig==null)
                 throw new ConfigurationErrorsException(
                     "could not find facility configuration section with the same name of the facility");

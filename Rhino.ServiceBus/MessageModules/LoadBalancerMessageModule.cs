@@ -1,8 +1,8 @@
 using System;
-using log4net;
 using Rhino.ServiceBus.Impl;
 using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.Messages;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.MessageModules
 {

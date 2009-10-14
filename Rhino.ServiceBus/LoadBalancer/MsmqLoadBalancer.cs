@@ -2,7 +2,6 @@ using System;
 using System.Messaging;
 using System.Threading;
 using System.Transactions;
-using log4net;
 using Rhino.ServiceBus.DataStructures;
 using Rhino.ServiceBus.Exceptions;
 using Rhino.ServiceBus.Internal;
@@ -11,6 +10,7 @@ using Rhino.ServiceBus.Msmq;
 using Rhino.ServiceBus.Transport;
 using MessageType = Rhino.ServiceBus.Transport.MessageType;
 using System.Linq;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.LoadBalancer
 {

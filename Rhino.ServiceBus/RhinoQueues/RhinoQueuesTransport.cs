@@ -6,7 +6,6 @@ using System.Net;
 using System.Threading;
 using System.Transactions;
 using System.Xml;
-using log4net;
 using Rhino.Queues;
 using Rhino.Queues.Model;
 using Rhino.ServiceBus.Impl;
@@ -14,6 +13,7 @@ using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.Messages;
 using Rhino.ServiceBus.Transport;
 using Rhino.ServiceBus.Util;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.RhinoQueues
 {

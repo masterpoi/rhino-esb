@@ -1,4 +1,3 @@
-using log4net;
 using Rhino.ServiceBus.Transport;
 
 namespace Rhino.ServiceBus.Msmq
@@ -7,6 +6,7 @@ namespace Rhino.ServiceBus.Msmq
 	using System.Messaging;
 	using System.Transactions;
 	using Exceptions;
+    using Rhino.ServiceBus.Logging;
 
 	public class OpenedQueue : IDisposable
 	{

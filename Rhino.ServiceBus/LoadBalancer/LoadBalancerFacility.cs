@@ -3,9 +3,9 @@ using System.Configuration;
 using Castle.Core;
 using Castle.Core.Configuration;
 using Castle.MicroKernel.Registration;
-using log4net;
 using Rhino.ServiceBus.Actions;
 using Rhino.ServiceBus.Impl;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.LoadBalancer
 {

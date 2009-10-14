@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using Castle.MicroKernel;
 using Castle.MicroKernel.Proxy;
-using log4net;
 using Rhino.ServiceBus.Exceptions;
 using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.MessageModules;
@@ -14,6 +13,7 @@ using Rhino.ServiceBus.Sagas;
 namespace Rhino.ServiceBus.Impl
 {
 	using Queues.Utils;
+    using Rhino.ServiceBus.Logging;
 
 	public class DefaultServiceBus : IStartableServiceBus
     {
