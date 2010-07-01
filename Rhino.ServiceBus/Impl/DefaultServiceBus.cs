@@ -24,7 +24,7 @@ namespace Rhino.ServiceBus.Impl
         private readonly IReflection reflection;
         private readonly ISubscriptionStorage subscriptionStorage;
         private readonly ITransport transport;
-        private readonly MessageOwner[] messageOwners;
+        private readonly MessageOwnersSelector messageOwners;
     	[ThreadStatic] public static object currentMessage;
         private readonly IEndpointRouter endpointRouter;
 
@@ -34,11 +34,12 @@ namespace Rhino.ServiceBus.Impl
             ISubscriptionStorage subscriptionStorage,
             IReflection reflection,
             IMessageModule[] modules,
-            MessageOwner[] messageOwners, IEndpointRouter endpointRouter)
+            MessageOwner[] messageOwners, 
+            IEndpointRouter endpointRouter)
         {
             this.transport = transport;
             this.endpointRouter = endpointRouter;
-            this.messageOwners = messageOwners;
+            this.messageOwners = new MessageOwnersSelector(messageOwners, endpointRouter);
             this.subscriptionStorage = subscriptionStorage;
             this.reflection = reflection;
             this.modules = modules;
@@ -98,29 +99,27 @@ namespace Rhino.ServiceBus.Impl
 
         public void Send(params object[] messages)
         {
-            Send(GetEndpointForMessageBatch(messages), messages);
+            Send(messageOwners.GetEndpointForMessageBatch(messages), messages);
         }
 
-        private Endpoint GetEndpointForMessageBatch(object[] messages)
-        {
-            if (messages == null)
-                throw new ArgumentNullException("messages");
+		public void ConsumeMessages(params object[] messages)
+		{
+			foreach (var message in messages)
+			{
+				var currentMessageInfo = new CurrentMessageInformation
+				{
+					AllMessages = messages,
+					Message = message,
+					MessageId = Guid.NewGuid(),
+					Destination = transport.Endpoint.Uri,
+					Source = transport.Endpoint.Uri,
+					TransportMessageId = "ConsumeMessages"
+				};
+				Transport_OnMessageArrived(currentMessageInfo);
+			}
+		}
 
-            if (messages.Length == 0)
-                throw new MessagePublicationException("Cannot send empty message batch");
-
-            var endpoint = messageOwners
-                .Where(x=>x.IsOwner(messages[0].GetType()))
-                .Select(x=>x.Endpoint)
-                .FirstOrDefault();
-            
-            if (endpoint == null)
-                throw new MessagePublicationException("Could not find no message owner for " + messages[0]);
-
-            return endpointRouter.GetRoutedEndpoint(endpoint);
-        }
-
-        public IDisposable AddInstanceSubscription(IMessageConsumer consumer)
+		public IDisposable AddInstanceSubscription(IMessageConsumer consumer)
         {
             var information = new InstanceSubscriptionInformation
             {
@@ -157,12 +156,12 @@ namespace Rhino.ServiceBus.Impl
 
             foreach (IMessageModule module in modules)
             {
-                module.Stop(transport);
+                module.Stop(transport, this);
             }
 
             var subscriptionAsModule = subscriptionStorage as IMessageModule;
             if (subscriptionAsModule != null)
-                subscriptionAsModule.Stop(transport);
+                subscriptionAsModule.Stop(transport, this);
         	FireServiceBusAware(aware => aware.BusDisposed(this));
         }
 
@@ -175,19 +174,19 @@ namespace Rhino.ServiceBus.Impl
             if (subscriptionAsModule != null)
             {
                 logger.DebugFormat("Initating subscription storage as message module: {0}", subscriptionAsModule);
-                subscriptionAsModule.Init(transport);
+                subscriptionAsModule.Init(transport, this);
             }
             foreach (var module in modules)
             {
                 logger.DebugFormat("Initating message module: {0}", module);
-                module.Init(transport);
+                module.Init(transport, this);
             }
             transport.MessageArrived += Transport_OnMessageArrived;
 
             transport.AdministrativeMessageArrived += Transport_OnAdministrativeMessageArrived;
 
-            transport.Start();
             subscriptionStorage.Initialize();
+			transport.Start();
 
             AutomaticallySubscribeConsumerMessages();
 
@@ -219,14 +218,13 @@ namespace Rhino.ServiceBus.Impl
 
     	public void Subscribe(Type type)
         {
-            foreach (var owner in messageOwners)
+            foreach (var owner in messageOwners.Of(type))
             {
-                if (owner.IsOwner(type) == false)
-                    continue;
-
                 logger.InfoFormat("Subscribing {0} on {1}", type.FullName, owner.Endpoint);
-                
-                Send(endpointRouter.GetRoutedEndpoint(owner.Endpoint), new AddSubscription
+
+            	var endpoint = endpointRouter.GetRoutedEndpoint(owner.Endpoint);
+            	endpoint.Transactional = owner.Transactional;
+            	Send(endpoint, new AddSubscription
                 {
                     Endpoint = Endpoint,
                     Type = type.FullName
@@ -246,12 +244,11 @@ namespace Rhino.ServiceBus.Impl
 
         public void Unsubscribe(Type type)
         {
-            foreach (var owner in messageOwners)
+            foreach (var owner in messageOwners.Of(type))
             {
-                if (owner.IsOwner(type) == false)
-                    continue;
-
-                Send(endpointRouter.GetRoutedEndpoint(owner.Endpoint), new RemoveSubscription
+            	var endpoint = endpointRouter.GetRoutedEndpoint(owner.Endpoint);
+            	endpoint.Transactional = owner.Transactional;
+            	Send(endpoint, new RemoveSubscription
                 {
                     Endpoint = Endpoint,
                     Type = type.FullName
@@ -264,17 +261,16 @@ namespace Rhino.ServiceBus.Impl
             foreach (var message in information.ConsumedMessages)
             {
                 bool subscribed = false;
-                foreach (var owner in messageOwners)
+                foreach (var owner in messageOwners.Of(message))
                 {
-                    if (owner.IsOwner(message) == false)
-                        continue;
-
                     logger.DebugFormat("Instance subscribition for {0} on {1}",
                         message.FullName,
                         owner.Endpoint);
 
                     subscribed = true;
-                    Send(endpointRouter.GetRoutedEndpoint(owner.Endpoint), new AddInstanceSubscription
+                	var endpoint = endpointRouter.GetRoutedEndpoint(owner.Endpoint);
+                	endpoint.Transactional = owner.Transactional;
+                	Send(endpoint, new AddInstanceSubscription
                     {
                         Endpoint = Endpoint.Uri.ToString(),
                         Type = message.FullName,
@@ -291,12 +287,11 @@ namespace Rhino.ServiceBus.Impl
         {
             foreach (var message in information.ConsumedMessages)
             {
-                foreach (var owner in messageOwners)
+                foreach (var owner in messageOwners.NotOf(message))
                 {
-                    if (owner.IsOwner(message))
-                        continue;
-
-                    Send(endpointRouter.GetRoutedEndpoint(owner.Endpoint), new RemoveInstanceSubscription
+                	var endpoint = endpointRouter.GetRoutedEndpoint(owner.Endpoint);
+                	endpoint.Transactional = owner.Transactional;
+                	Send(endpoint, new RemoveInstanceSubscription
                     {
                         Endpoint = Endpoint.Uri.ToString(),
                         Type = message.FullName,
@@ -332,7 +327,7 @@ namespace Rhino.ServiceBus.Impl
         /// <param name="msgs">The messages.</param>
         public void DelaySend(DateTime time, params object[] msgs)
         {
-            DelaySend(GetEndpointForMessageBatch(msgs), time, msgs);
+            DelaySend(messageOwners.GetEndpointForMessageBatch(msgs), time, msgs);
         }
         
         private void AutomaticallySubscribeConsumerMessages()

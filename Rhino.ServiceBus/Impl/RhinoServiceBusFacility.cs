@@ -7,6 +7,7 @@ using Castle.MicroKernel;
 using Castle.MicroKernel.Registration;
 using Rhino.ServiceBus.Actions;
 using System.Transactions;
+using Rhino.ServiceBus.Msmq;
 
 namespace Rhino.ServiceBus.Impl
 {
@@ -17,7 +18,7 @@ namespace Rhino.ServiceBus.Impl
         protected override void ReadConfiguration()
 	    {
 	        ReadBusConfiguration();
-	        ReadMessageOwners();
+	        new MessageOwnersConfigReader(FacilityConfig, messageOwners).ReadMessageOwners();
 	    }
 
         protected override void RegisterComponents()
@@ -49,40 +50,6 @@ namespace Rhino.ServiceBus.Impl
             return config;
         }
 
-        protected void ReadMessageOwners()
-        {
-            IConfiguration messageConfig = FacilityConfig.Children["messages"];
-            if (messageConfig == null)
-                throw new ConfigurationErrorsException("Could not find 'messages' node in configuration");
-
-            foreach (IConfiguration configuration in messageConfig.Children)
-            {
-                if (configuration.Name != "add")
-                    throw new ConfigurationErrorsException("Unknown node 'messages/" + configuration.Name + "'");
-
-                string msgName = configuration.Attributes["name"];
-                if (string.IsNullOrEmpty(msgName))
-                    throw new ConfigurationErrorsException("Invalid name element in the <messages/> element");
-
-                string uriString = configuration.Attributes["endpoint"];
-                Uri ownerEndpoint;
-                try
-                {
-                    ownerEndpoint = new Uri(uriString);
-                }
-                catch (Exception e)
-                {
-                    throw new ConfigurationErrorsException("Invalid endpoint url: " + uriString, e);
-                }
-
-                messageOwners.Add(new MessageOwner
-                {
-                    Name = msgName,
-                    Endpoint = ownerEndpoint
-                });
-            }
-        }
-
         protected void ReadBusConfiguration()
         {
             IConfiguration busConfig = FacilityConfig.Children["bus"];
@@ -111,9 +78,21 @@ namespace Rhino.ServiceBus.Impl
                     "Attribute 'endpoint' on 'bus' has an invalid value '" + uriString + "'");
             }
             Endpoint = endpoint;
+
+			string transactionalString = busConfig.Attributes["transactional"];
+        	bool temp;
+			if (bool.TryParse(transactionalString, out temp))
+			{
+				Transactional = temp ? TransactionalOptions.Transactional : TransactionalOptions.NonTransactional;
+			}
+			else if(transactionalString != null)
+			{
+				throw new ConfigurationErrorsException(
+					"Attribute 'transactional' on 'bus' has an invalid value '" + uriString + "'");
+			}
         }
 
-	    public IFacility UseFlatQueueStructure()
+		public IFacility UseFlatQueueStructure()
 	    {
 	        UseFlatQueue = true;
 	        return this;

@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Castle.Core;
 using Castle.MicroKernel.Registration;
 using Castle.Windsor;
 using Rhino.ServiceBus.Actions;
@@ -34,17 +35,28 @@ namespace Rhino.ServiceBus.Hosting
                 AllTypes.Of<IDeploymentAction>()
                     .FromAssembly(Assembly),
                 AllTypes.Of<IEnvironmentValidationAction>()
-                    .FromAssembly(Assembly),
-                AllTypes
-					.FromAssembly(Assembly)
-					.Where(type => 
-						typeof(IMessageConsumer).IsAssignableFrom(type) && 
-                        typeof(IOccasionalMessageConsumer).IsAssignableFrom(type) == false &&
-						IsTypeAcceptableForThisBootStrapper(type)
-					)
-					.Configure((Action<ComponentRegistration>)ConfigureConsumer)
+                    .FromAssembly(Assembly)
                 );
+			RegisterConsumersFrom (Assembly);
         }
+
+		protected virtual void RegisterConsumersFrom(Assembly assembly)
+		{
+			container.Register (
+				 AllTypes
+					.FromAssembly (assembly)
+					.Where (type =>
+						typeof (IMessageConsumer).IsAssignableFrom (type) &&
+						typeof (IOccasionalMessageConsumer).IsAssignableFrom (type) == false &&
+						IsTypeAcceptableForThisBootStrapper (type)
+					)
+					.Configure (registration =>
+					{
+						registration.LifeStyle.Is (LifestyleType.Transient);
+						ConfigureConsumer (registration);
+					})
+				);
+		}
 
     	protected virtual void ConfigureConsumer(ComponentRegistration registration)
     	{

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using log4net;
 
 namespace Rhino.ServiceBus.Hosting
 {
@@ -38,6 +39,8 @@ namespace Rhino.ServiceBus.Hosting
             assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
             assemblyLocation = Path.GetDirectoryName(assemblyPath);
         }
+
+		public IApplicationHost ApplicationHost { get { return current.ApplicationHost; } }
 
         public void Start()
         {
@@ -109,7 +112,10 @@ namespace Rhino.ServiceBus.Hosting
             private readonly IApplicationHost hoster;
             private readonly string assembly;
             private readonly AppDomain appDomain;
+        	private readonly ILog log = LogManager.GetLogger(typeof (HostedService));
 
+			public IApplicationHost ApplicationHost { get { return hoster; } }
+			
             public HostedService(IApplicationHost hoster, string assembly, AppDomain appDomain)
             {
                 this.hoster = hoster;
@@ -120,7 +126,15 @@ namespace Rhino.ServiceBus.Hosting
             public void Stop()
             {
                 hoster.Dispose();
-                AppDomain.Unload(appDomain);
+            	try
+            	{
+            		AppDomain.Unload(appDomain);
+            	}
+            	catch (Exception e)
+            	{
+            		log.Error(
+            			"Could not unload app domain, it is likely that there is a running thread that could not be aborted", e);
+            	}
             }
 
             public void Start()

@@ -48,30 +48,31 @@ namespace Rhino.ServiceBus.Msmq
 
         public MessageQueue[] InitializeQueue(Endpoint queueEndpoint, QueueType queueType)
         {
-            switch (queueType)
+        	var queue = MsmqUtil.GetQueuePath(queueEndpoint).Create();
+        	switch (queueType)
             {
                 case QueueType.Standard:
                     return new[]
 	                {
-	                    MsmqUtil.GetQueuePath(queueEndpoint).Create(),
-	                    MsmqUtil.OpenOrCreateQueue(GetErrorsQueuePath(), QueueAccessMode.SendAndReceive),
-	                    MsmqUtil.OpenOrCreateQueue(GetSubscriptionQueuePath(), QueueAccessMode.SendAndReceive),
-	                    MsmqUtil.OpenOrCreateQueue(GetDiscardedQueuePath(), QueueAccessMode.SendAndReceive),
-	                    MsmqUtil.OpenOrCreateQueue(GetTimeoutQueuePath(), QueueAccessMode.SendAndReceive),
+	                    queue,
+	                    MsmqUtil.OpenOrCreateQueue(GetErrorsQueuePath(), QueueAccessMode.SendAndReceive, queue),
+	                    MsmqUtil.OpenOrCreateQueue(GetSubscriptionQueuePath(), QueueAccessMode.SendAndReceive, queue),
+	                    MsmqUtil.OpenOrCreateQueue(GetDiscardedQueuePath(), QueueAccessMode.SendAndReceive, queue),
+	                    MsmqUtil.OpenOrCreateQueue(GetTimeoutQueuePath(), QueueAccessMode.SendAndReceive, queue),
 	                };
                 case QueueType.LoadBalancer:
                     return new[]
 	                {
-	                    MsmqUtil.GetQueuePath(queueEndpoint).Create(),
-	                    MsmqUtil.OpenOrCreateQueue(GetKnownWorkersQueuePath(), QueueAccessMode.SendAndReceive),
-	                    MsmqUtil.OpenOrCreateQueue(GetKnownEndpointsQueuePath(), QueueAccessMode.SendAndReceive),
+	                    queue,
+	                    MsmqUtil.OpenOrCreateQueue(GetKnownWorkersQueuePath(), QueueAccessMode.SendAndReceive, queue),
+	                    MsmqUtil.OpenOrCreateQueue(GetKnownEndpointsQueuePath(), QueueAccessMode.SendAndReceive, queue),
 	                };
                 default:
                     throw new ArgumentOutOfRangeException("queueType", "Can't handle queue type: " + queueType);
             }
         }
 
-        private string GetKnownEndpointsQueuePath()
+    	private string GetKnownEndpointsQueuePath()
         {
             var path = MsmqUtil.GetQueuePath(endpointRouter.GetRoutedEndpoint(endpoint));
             return path.QueuePath + knownEndpoints;
@@ -106,13 +107,15 @@ namespace Rhino.ServiceBus.Msmq
         		while (enumerator2.MoveNext())
         		{
         			var message = enumerator2.Current;
-        			if (message == null)
-        				continue;
+							if (message == null || message.Extension.Length < 16)
+							{
+								continue;
+							}
 
         			yield return new TimeoutInfo
         			             	{
         			             		Id = message.Id,
-        			             		Time = DateTime.FromBinary(BitConverter.ToInt64(message.Extension, 0))
+        			             		Time = DateTime.FromBinary(BitConverter.ToInt64(message.Extension, 16))
         			             	};
         		}
         	}
@@ -160,7 +163,17 @@ namespace Rhino.ServiceBus.Msmq
             }
         }
 
-        /// <summary>
+    	public void SendToErrorQueue(OpenedQueue queue, Message message)
+    	{
+    		using(var errQueue = new MessageQueue(GetErrorsQueuePath()))
+    		{
+				// here we assume that the queue transactionalibilty is the same for the error sibling queue
+				// and the main queue!
+    			errQueue.Send(message, queue.GetSingleTransactionType());
+    		}
+    	}
+
+    	/// <summary>
         /// Gets the errors queue path.
         /// </summary>
         /// <returns></returns>

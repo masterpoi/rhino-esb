@@ -43,13 +43,15 @@ namespace Rhino.ServiceBus.Msmq
 				while(enumerator2.MoveNext())
 				{
 					var message = enumerator2.Current;
-					if(message==null)
+					if (message == null || message.Extension.Length < 16)
+					{
 						continue;
+					}
 					
 					yield return new TimeoutInfo
 					{
 						Id = message.Id,
-						Time = DateTime.FromBinary(BitConverter.ToInt64(message.Extension, 0))
+						Time = DateTime.FromBinary(BitConverter.ToInt64(message.Extension, 16))
 					};
 				}
 			}
@@ -84,5 +86,10 @@ namespace Rhino.ServiceBus.Msmq
 	            return false;
 	        }
 	    }
+
+		public void SendToErrorQueue(OpenedQueue queue, Message message)
+		{
+			queue.Send(message);
+		}
 	}
 }

@@ -249,17 +249,20 @@ namespace Rhino.ServiceBus.Msmq
 
         private bool ConsumeAddInstanceSubscription(CurrentMessageInformation msgInfo, AddInstanceSubscription subscription)
         {
-            remoteInstanceSubscriptions.Add(
-                subscription.InstanceSubscriptionKey, 
-                subscription.Type,
-                new Uri(subscription.Endpoint), 
-                msgInfo.TransportMessageId);
             var msmqMsgInfo = msgInfo as MsmqCurrentMessageInformation;
+            var msgId = msgInfo.TransportMessageId;
             if (msmqMsgInfo != null)
             {
                 msmqMsgInfo.Queue.Send(
                     msmqMsgInfo.MsmqMessage.SetSubQueueToSendTo(SubQueue.Subscriptions));
+                // may be changed by the sending
+                msgId = msmqMsgInfo.MsmqMessage.Id;
             }
+            remoteInstanceSubscriptions.Add(
+                subscription.InstanceSubscriptionKey, 
+                subscription.Type,
+                new Uri(subscription.Endpoint), 
+                msgId);
             RaiseSubscriptionChanged();
             return true;
         }
@@ -376,12 +379,12 @@ namespace Rhino.ServiceBus.Msmq
             RaiseSubscriptionChanged();
         }
 
-        void IMessageModule.Init(ITransport transport)
+		void IMessageModule.Init(ITransport transport, IServiceBus bus)
         {
             transport.AdministrativeMessageArrived += HandleAdministrativeMessage;
         }
 
-        void IMessageModule.Stop(ITransport transport)
+		void IMessageModule.Stop(ITransport transport, IServiceBus bus)
         {
             transport.AdministrativeMessageArrived -= HandleAdministrativeMessage;
         }
