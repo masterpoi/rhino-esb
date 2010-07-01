@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Transactions;
-using log4net;
 using Rhino.ServiceBus.Impl;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.Transport
 {

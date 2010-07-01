@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using log4net;
 
 namespace Rhino.ServiceBus.Hosting
 {
     using System.Reflection;
     using System.Text;
+    using Rhino.ServiceBus.Logging;
 
     public class RemoteAppDomainHost
     {

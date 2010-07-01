@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Messaging;
 using System.Runtime.Serialization;
-using log4net;
 using Rhino.ServiceBus.Internal;
 using Rhino.ServiceBus.Messages;
+using Rhino.ServiceBus.Logging;
 
 namespace Rhino.ServiceBus.Msmq
 {
